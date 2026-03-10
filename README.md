@@ -1,0 +1,1 @@
+# hitahita-vj-class
