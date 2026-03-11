@@ -1,5 +1,6 @@
 import p5 from "p5";
 import { VisualComposer } from "../manager/visualComposer"; // ビジュアル描画を管理するマネージャー
+import type { VisualLayerVisibility } from "../manager/visualComposer";
 import { EffectManager } from "../manager/effectManager"; // シェーダーエフェクトを適用するマネージャー
 import { UIManager } from "../manager/uiManager"; // UIオーバーレイを描画するマネージャー
 import { BPMManager } from "../utils/rhythm/bpmManager"; // BPMとビートを管理するユーティリティ
@@ -13,11 +14,10 @@ import mainVert from "../shaders/main.vert"; // 頂点シェーダーソース
 import postFrag from "../shaders/post.frag"; // フラグメントシェーダーソース
 
 /**
- * ランタイムで共有するフォントやロゴなどのアセット。
+ * ランタイムで共有するフォントなどのアセット。
  */
 interface RuntimeAssets {
   font?: p5.Font;
-  logo?: p5.Image;
 }
 
 /**
@@ -90,15 +90,17 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
   };
 
   let initialized = false;
+  const layerVisibility: VisualLayerVisibility & { ui: boolean } = {
+    ui: true,
+    synth: true,
+    image: true,
+    shape: true,
+  };
 
   const loadAssets = async (p: p5): Promise<void> => {
     try {
-      // ロゴ画像とフォントを並行して読み込み
-      const [logo, font] = await Promise.all([
-        p.loadImage("/image/logo/kimura.png"),
-        p.loadFont("/font/Jost-Regular.ttf"),
-      ]);
-      context.assets.logo = logo;
+      // フォントを読み込み
+      const font = await p.loadFont("/font/Jost-Regular.ttf");
       context.assets.font = font;
     } catch (error) {
       console.error("Asset loading failed", error);
@@ -154,6 +156,7 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
       }
 
       const beat = bpmManager.getBeat();
+      const bpm = bpmManager.getBPM();
       const visualFont = context.assets.font;
 
       // 各マネージャーの更新
@@ -163,25 +166,49 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
       midiManager.update(beat);
 
       // ビジュアルの更新と描画
-      visualComposer.update(p, midiManager, beat, audioManager, captureManager, visualFont);
-      visualComposer.draw(p, midiManager, beat, audioManager, captureManager, visualFont);
+      visualComposer.update(
+        p,
+        midiManager,
+        beat,
+        bpm,
+        {
+          synth: layerVisibility.synth,
+          image: layerVisibility.image,
+          shape: layerVisibility.shape,
+        },
+        audioManager,
+        captureManager,
+        visualFont,
+      );
+      visualComposer.draw(
+        p,
+        midiManager,
+        beat,
+        bpm,
+        {
+          synth: layerVisibility.synth,
+          image: layerVisibility.image,
+          shape: layerVisibility.shape,
+        },
+        audioManager,
+        captureManager,
+        visualFont,
+      );
 
-      // UIの描画（アセットが読み込まれていれば）
-      const { font, logo } = context.assets;
-      if (font && logo) {
-        const uiContext: VisualRenderContext = {
-          p,
-          tex: uiManager.getTexture(), // UI描画では内部でテクスチャを使用
-          midiManager,
-          beat,
-          audioManager,
-          captureManager,
-          font,
-        };
+      // UIの描画
+      const uiTexture = uiManager.getTexture();
+      const uiContext: VisualRenderContext = {
+        p,
+        tex: uiTexture, // UI描画では内部でテクスチャを使用
+        midiManager,
+        beat,
+        audioManager,
+        captureManager,
+        font: context.assets.font,
+      };
+      if (layerVisibility.ui) {
         uiManager.draw(uiContext);
       } else {
-        // アセット未読み込み時はUIテクスチャをクリア
-        const uiTexture = uiManager.getTexture();
         uiTexture.push();
         uiTexture.clear();
         uiTexture.pop();
@@ -193,7 +220,7 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
         midiManager,
         beat,
         visualComposer.getTexture(),
-        uiManager.getTexture(),
+        uiTexture,
       );
     },
 
@@ -209,6 +236,21 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
     handleKeyPressed(p: p5): void {
       if (p.keyCode === 32) {
         p.fullscreen(true); // スペースキーでフルスクリーン
+      }
+      if (p.keyCode === 13) {
+        bpmManager.tapTempo(); // Enter キーでタップテンポ
+      }
+      if (p.key === "1") {
+        layerVisibility.synth = !layerVisibility.synth;
+      }
+      if (p.key === "2") {
+        layerVisibility.ui = !layerVisibility.ui;
+      }
+      if (p.key === "3") {
+        layerVisibility.image = !layerVisibility.image;
+      }
+      if (p.key === "4") {
+        layerVisibility.shape = !layerVisibility.shape;
       }
       // オーディオコンテキストを再開（ユーザー操作が必要）
       audioManager?.resume().catch(() => undefined);

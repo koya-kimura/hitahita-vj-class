@@ -79,6 +79,8 @@ export class APCMiniMK2Manager extends MIDIManager {
   private sequencePositions: Map<string, number> = new Map();
   /** sequence 同期用: 前回のbeat値を保持 */
   private lastSequenceBeat: Map<string, number> = new Map();
+  /** oneshot 押下直後のキー（1フレーム保持） */
+  private oneshotTriggeredThisFrame: Set<string> = new Set();
 
   constructor() {
     super();
@@ -162,6 +164,9 @@ export class APCMiniMK2Manager extends MIDIManager {
           this.inputValues.set(key, false);
           this.lastRandomBeat.set(key, -1);
           break;
+        case "multistate":
+          this.inputValues.set(key, 0);
+          break;
         case "sequence": {
           // sequenceタイプ: パターンに従ってbeat同期で値が変化
           const cellCount = config.cells.length;
@@ -199,8 +204,8 @@ export class APCMiniMK2Manager extends MIDIManager {
     const result: Record<string, MidiInputValue> = {};
     for (const [key, value] of this.inputValues) {
       const config = this.buttonConfigs.get(key);
-      if (config?.type === "radio") {
-        // radioタイプは数値を保証
+      if (config?.type === "radio" || config?.type === "multistate") {
+        // radio / multistate タイプは数値を保証
         result[key] = typeof value === "number" ? value : 0;
       } else {
         result[key] = value;
@@ -232,6 +237,9 @@ export class APCMiniMK2Manager extends MIDIManager {
 
     // LED出力
     this.midiOutputSendControls();
+
+    // 次フレームで oneshot をリセットできるようにフラグをクリア
+    this.oneshotTriggeredThisFrame.clear();
   }
 
   /**
@@ -240,6 +248,9 @@ export class APCMiniMK2Manager extends MIDIManager {
   private resetOneshotValues(): void {
     for (const [key, config] of this.buttonConfigs) {
       if (config.type === "oneshot") {
+        if (this.oneshotTriggeredThisFrame.has(key)) {
+          continue;
+        }
         this.inputValues.set(key, false);
       }
     }
@@ -442,6 +453,7 @@ export class APCMiniMK2Manager extends MIDIManager {
         }
         case "oneshot":
           this.inputValues.set(key, true);
+          this.oneshotTriggeredThisFrame.add(key);
           break;
         case "momentary":
           this.inputValues.set(key, true);
@@ -455,6 +467,15 @@ export class APCMiniMK2Manager extends MIDIManager {
           if (currentRandom) {
             this.lastRandomBeat.set(key, -1);
           }
+          break;
+        }
+        case "multistate": {
+          const current = this.inputValues.get(key);
+          const currentValue = typeof current === "number" ? current : 0;
+          const config = this.buttonConfigs.get(key);
+          const stateCount = Math.max(2, config?.stateCount ?? 2);
+          const nextValue = (currentValue + 1) % stateCount;
+          this.inputValues.set(key, nextValue);
           break;
         }
         case "sequence": {
@@ -577,6 +598,15 @@ export class APCMiniMK2Manager extends MIDIManager {
       case "random":
         // randomボタンはON/OFFで色を切り替え
         return currentValue === true ? activeColor : inactiveColor;
+      case "multistate": {
+        const value = typeof currentValue === "number" ? currentValue : 0;
+        const config = this.buttonConfigs.get(key);
+        const stateColors = config?.stateColors;
+        if (stateColors && value >= 0 && value < stateColors.length) {
+          return stateColors[value];
+        }
+        return value > 0 ? activeColor : inactiveColor;
+      }
       case "sequence": {
         // sequenceタイプ: アクティブ位置、ON、OFFの3パターン
         const config = this.buttonConfigs.get(key);
@@ -670,6 +700,16 @@ export class APCMiniMK2Manager extends MIDIManager {
     }
 
     this.inputValues.set(targetKey, newValue);
+  }
+
+  /**
+   * ボタン値を外部から上書きする。
+   */
+  public setButtonValue(key: string, value: MidiInputValue): void {
+    if (!this.buttonConfigs.has(key)) {
+      return;
+    }
+    this.inputValues.set(key, value);
   }
 
   /**

@@ -2,20 +2,30 @@ import p5 from "p5";
 import type { APCMiniMK2Manager } from "../midi/apcmini_mk2/apcMiniMk2Manager"; // MIDIコントローラー管理クラス
 import type { AudioMicManager } from "../utils/audio/audioMicManager"; // オーディオ入力管理クラス
 import type { CaptureManager } from "../utils/capture/captureManager"; // カメラキャプチャ管理クラス
+import { ImageLayer } from "../visuals/layers/imageLayer";
+import { SimpleShapeLayer } from "../visuals/layers/simpleShapeLayer";
+import { SynthLayer } from "../visuals/layers/synthLayer";
 
-import { sampleScene } from "../visuals/sampleScene";
+export interface VisualLayerVisibility {
+  shape: boolean;
+  image: boolean;
+  synth: boolean;
+}
 
 /**
  * VisualComposer はレンダーターゲットとアクティブなビジュアル1つを管理する。
  */
 export class VisualComposer {
   private renderTexture: p5.Graphics | undefined; // ビジュアル描画用のオフスクリーンキャンバス
-
-  private sampleScene: sampleScene;
+  private readonly simpleShapeLayer: SimpleShapeLayer;
+  private readonly imageLayer: ImageLayer;
+  private readonly synthLayer: SynthLayer;
 
   constructor() {
     this.renderTexture = undefined;
-    this.sampleScene = new sampleScene();
+    this.simpleShapeLayer = new SimpleShapeLayer();
+    this.imageLayer = new ImageLayer();
+    this.synthLayer = new SynthLayer();
   }
 
   /**
@@ -25,6 +35,9 @@ export class VisualComposer {
    */
   init(p: p5): void {
     this.renderTexture = p.createGraphics(p.width, p.height);
+    this.simpleShapeLayer.init(p);
+    this.imageLayer.init(p);
+    this.synthLayer.init(p);
   }
 
   /**
@@ -64,13 +77,21 @@ export class VisualComposer {
    * @param _font フォント。
    */
   update(
-    _p: p5,
-    _midiManager: APCMiniMK2Manager,
-    _beat: number,
-    _audioManager?: AudioMicManager,
-    _captureManager?: CaptureManager,
-    _font?: p5.Font,
-  ): void { }
+    p: p5,
+    midiManager: APCMiniMK2Manager,
+    beat: number,
+    bpm: number,
+    visibility: VisualLayerVisibility,
+    audioManager?: AudioMicManager,
+    captureManager?: CaptureManager,
+    font?: p5.Font,
+  ): void {
+    this.simpleShapeLayer.update(p, midiManager, beat, bpm, audioManager, captureManager, font);
+    this.imageLayer.update(p, midiManager, beat, bpm, audioManager, captureManager, font);
+    if (visibility.synth) {
+      this.synthLayer.update(p, midiManager, beat, bpm, audioManager, captureManager, font);
+    }
+  }
 
   /**
    * ビジュアルを描画する。
@@ -83,29 +104,29 @@ export class VisualComposer {
    * @param _font フォント。
    */
   draw(
-    _p: p5,
-    _midiManager: APCMiniMK2Manager,
-    _beat: number,
-    _audioManager?: AudioMicManager,
-    _captureManager?: CaptureManager,
-    _font?: p5.Font,
+    p: p5,
+    midiManager: APCMiniMK2Manager,
+    beat: number,
+    bpm: number,
+    visibility: VisualLayerVisibility,
+    audioManager?: AudioMicManager,
+    captureManager?: CaptureManager,
+    font?: p5.Font,
   ): void {
     const tex = this.ensureTexture();
-    const ctx = {
-      p: _p,
-      tex,
-      midiManager: _midiManager,
-      beat: _beat,
-      audioManager: _audioManager,
-      captureManager: _captureManager,
-      font: _font,
-    };
-
-    // サンプル描画（赤い円）
     tex.push();
     tex.background(0);
-    this.sampleScene.draw(ctx);
     tex.pop();
+
+    if (visibility.shape) {
+      this.simpleShapeLayer.draw(p, tex, midiManager, beat, bpm, audioManager, captureManager, font);
+    }
+    if (visibility.image) {
+      this.imageLayer.draw(p, tex, midiManager, beat, bpm, audioManager, captureManager, font);
+    }
+    if (visibility.synth) {
+      this.synthLayer.draw(p, tex, midiManager, beat, bpm, audioManager, captureManager, font);
+    }
   }
 
   /**
@@ -116,12 +137,18 @@ export class VisualComposer {
   resize(p: p5): void {
     const texture = this.ensureTexture();
     texture.resizeCanvas(p.width, p.height);
+    this.simpleShapeLayer.resize(p);
+    this.imageLayer.resize(p);
+    this.synthLayer.resize(p);
   }
 
   /**
    * リソースを解放する。
    */
   dispose(): void {
+    this.simpleShapeLayer.dispose();
+    this.imageLayer.dispose();
+    this.synthLayer.dispose();
     this.renderTexture?.remove();
     this.renderTexture = undefined;
   }
