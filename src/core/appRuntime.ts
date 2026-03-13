@@ -12,6 +12,10 @@ import { defaultAppConfig } from "./appConfig"; // デフォルト設定
 import type { VisualRenderContext } from "../types/render"; // 描画コンテキスト
 import mainVert from "../shaders/main.vert"; // 頂点シェーダーソース
 import postFrag from "../shaders/post.frag"; // フラグメントシェーダーソース
+import {
+  shouldTriggerSynthDebugKey,
+  SYNTH_DEBUG_KEY_CONFIG,
+} from "../visuals/synth/debug/synthDebugConfig";
 
 /**
  * ランタイムで共有するフォントなどのアセット。
@@ -252,6 +256,16 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
       if (p.key === "4") {
         layerVisibility.shape = !layerVisibility.shape;
       }
+
+      if (shouldTriggerSynthDebugKey(p.key, p.keyCode)) {
+        layerVisibility.synth = true;
+        visualComposer.triggerDebugSynthPreset(
+          p,
+          bpmManager.getBPM(),
+          SYNTH_DEBUG_KEY_CONFIG.presetIndex,
+        );
+      }
+
       // オーディオコンテキストを再開（ユーザー操作が必要）
       audioManager?.resume().catch(() => undefined);
     },

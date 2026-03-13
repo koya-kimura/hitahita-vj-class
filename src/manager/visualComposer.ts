@@ -142,6 +142,10 @@ export class VisualComposer {
     this.synthLayer.resize(p);
   }
 
+  triggerDebugSynthPreset(p: p5, bpm: number, presetIndex: number): void {
+    this.synthLayer.spawnPresetForDebug(p, bpm, presetIndex);
+  }
+
   /**
    * リソースを解放する。
    */

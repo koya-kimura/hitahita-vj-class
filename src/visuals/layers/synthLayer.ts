@@ -1,7 +1,7 @@
 import p5 from "p5";
-import type { BaseSynthObject } from "../../synth/object";
-import { Looper } from "../../synth/looper";
-import { PRESETS } from "../../synth/presets";
+import type { BaseSynthObject } from "../synth/object";
+import { Looper } from "../synth/looper";
+import { PRESETS } from "../synth/presets";
 import type { APCMiniMK2Manager } from "../../midi/apcmini_mk2/apcMiniMk2Manager";
 import type { AudioMicManager } from "../../utils/audio/audioMicManager";
 import type { CaptureManager } from "../../utils/capture/captureManager";
@@ -82,6 +82,10 @@ export class SynthLayer {
 
   resize(_p: p5): void {
     this.synthObjects = [];
+  }
+
+  spawnPresetForDebug(p: p5, bpm: number, presetIndex: number): void {
+    this.spawnPreset(p, bpm, p.millis(), presetIndex);
   }
 
   dispose(): void {
