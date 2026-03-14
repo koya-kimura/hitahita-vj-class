@@ -11,7 +11,7 @@ export const drawShape08: SimpleShapeDrawer = (context) => {
 
   tex.push();
   tex.noFill();
-  tex.stroke(255, 190);
+  tex.stroke(255, 255);
   tex.strokeWeight(1.2);
 
   for (let col = -1; col <= cols + 1; col++) {

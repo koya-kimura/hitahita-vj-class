@@ -1,10 +1,15 @@
-import type { SynthColorKey } from "../../utils/color/colorPalette";
-import { getSynthColorHSB } from "../../utils/color/colorPalette";
+import type { RoleColorKey, SynthColorKey } from "../../utils/color/colorPalette";
+import { CORE_ROLE_COLOR_KEYS, getRoleColorHSB, getSynthColorHSB } from "../../utils/color/colorPalette";
 
 export type Waveform = "sine" | "saw" | "square" | "noise";
 export type LfoType = "sine" | "triangle" | "saw" | "square" | "noise";
 export type EasingFunction =
   | "linear"
+  | "easeInSine"
+  | "easeOutSine"
+  | "easeInExpo"
+  | "easeOutExpo"
+  | "easeInOutExpo"
   | "easeInQuad"
   | "easeOutQuad"
   | "easeInOutQuad"
@@ -18,6 +23,7 @@ export interface ColorParams {
   hue?: number;
   saturation?: number;
   brightness?: number;
+  roleColor?: RoleColorKey;
   paletteColor?: SynthColorKey;
 }
 
@@ -82,16 +88,42 @@ export const beatsToMs = (beats: number, bpm: number): number => {
   return (beats * 60000) / bpm;
 };
 
+const HUE_CANDIDATES: Array<{ key: RoleColorKey; hue: number }> = CORE_ROLE_COLOR_KEYS.map((key) => ({
+  key,
+  hue: getRoleColorHSB(key).hue,
+}));
+
+const circularHueDistance = (a: number, b: number): number => {
+  const d = Math.abs(a - b) % 360;
+  return Math.min(d, 360 - d);
+};
+
+const pickNearestRoleColorByHue = (hue: number): RoleColorKey => {
+  let nearest = HUE_CANDIDATES[0];
+  let bestDistance = circularHueDistance(hue, nearest.hue);
+
+  for (let i = 1; i < HUE_CANDIDATES.length; i++) {
+    const candidate = HUE_CANDIDATES[i];
+    const distance = circularHueDistance(hue, candidate.hue);
+    if (distance < bestDistance) {
+      nearest = candidate;
+      bestDistance = distance;
+    }
+  }
+
+  return nearest.key;
+};
+
 export const resolveSynthParams = (params?: SynthParams): ResolvedSynthParams => {
   const color = params?.colorParams;
+  const fallbackHue = color?.hue ?? getRoleColorHSB("main").hue;
+  const fallbackRole = pickNearestRoleColorByHue(fallbackHue);
 
-  const resolvedColor = color?.paletteColor
-    ? getSynthColorHSB(color.paletteColor)
-    : {
-        hue: color?.hue ?? 0,
-        saturation: color?.saturation ?? 90,
-        brightness: color?.brightness ?? 100,
-      };
+  const resolvedColor = color?.roleColor
+    ? getRoleColorHSB(color.roleColor)
+    : color?.paletteColor
+      ? getSynthColorHSB(color.paletteColor)
+      : getRoleColorHSB(fallbackRole);
 
   return {
     attackTime: params?.attackTime ?? 0.1,

@@ -10,6 +10,8 @@ export class MIDIManager {
   private initPromise: Promise<void> | undefined = undefined;
   protected midiAvailable: boolean = false;
 
+  private readonly attachedInputIds: Set<string> = new Set();
+
   /**
    * MIDIManagerクラスのコンストラクタです。
    * 初期化は init() メソッドを明示的に呼び出すまで開始されません。
@@ -70,14 +72,38 @@ export class MIDIManager {
    * @param access requestMIDIAccessから取得したMIDIAccessオブジェクト。
    */
   private setupMidi(access: WebMidi.MIDIAccess): void {
-    const input = Array.from(access.inputs.values())[0];
-    const output = Array.from(access.outputs.values())[0];
+    const inputs = Array.from(access.inputs.values());
+    const outputs = Array.from(access.outputs.values());
+    const inputNames = inputs.map((port) => port.name ?? "(unknown)");
+    const outputNames = outputs.map((port) => port.name ?? "(unknown)");
+
+    console.log("Available MIDI Inputs:", inputNames);
+    console.log("Available MIDI Outputs:", outputNames);
+
+    access.onstatechange = (event) => {
+      const port = event.port;
+      console.log("MIDI state changed:", {
+        name: port.name,
+        manufacturer: port.manufacturer,
+        type: port.type,
+        state: port.state,
+        connection: port.connection,
+      });
+    };
+
+    const preferredInputNames = this.getPreferredInputNames();
+    const preferredOutputNames = this.getPreferredOutputNames();
+
+    const input = this.selectPortByName(inputs, preferredInputNames);
+    const output = this.selectPortByName(outputs, preferredOutputNames);
 
     if (input) {
       console.log(`MIDI Input: ${input.name}`);
-      input.onmidimessage = (msg) => {
+      this.attachInputListener(input, (msg) => {
         this.onMidiMessageCallback?.(msg);
-      };
+      });
+    } else {
+      console.warn("MIDI Input not found.", { preferredInputNames, availableInputs: inputNames });
     }
 
     if (output) {
@@ -85,8 +111,115 @@ export class MIDIManager {
       this.midiOutput = output;
       this.onMidiAvailabilityChanged(true);
     } else {
-      console.warn("MIDI Output not found.");
+      console.warn("MIDI Output not found.", {
+        preferredOutputNames,
+        availableOutputs: outputNames,
+      });
       this.onMidiAvailabilityChanged(false);
+    }
+
+    this.setupAdditionalInputListeners(inputs);
+  }
+
+  /**
+   * 主要入力ポートの優先候補名を返します。
+   * サブクラスで必要に応じて上書きします。
+   */
+  protected getPreferredInputNames(): string[] {
+    return [];
+  }
+
+  /**
+   * 主要出力ポートの優先候補名を返します。
+   * サブクラスで必要に応じて上書きします。
+   */
+  protected getPreferredOutputNames(): string[] {
+    return [];
+  }
+
+  /**
+   * 追加で監視する入力ポートを返します。
+   * サブクラスで必要に応じて上書きします。
+   */
+  protected getAdditionalInputListeners(): Array<{
+    nameIncludes: string;
+    onMessage: (message: WebMidi.MIDIMessageEvent, input: WebMidi.MIDIInput) => void;
+  }> {
+    return [];
+  }
+
+  /**
+   * 入力ポートへ重複なくメッセージリスナーを追加します。
+   */
+  private attachInputListener(
+    input: WebMidi.MIDIInput,
+    handler: (message: WebMidi.MIDIMessageEvent) => void,
+  ): void {
+    if (this.attachedInputIds.has(input.id)) {
+      return;
+    }
+
+    void input
+      .open()
+      .then(() => {
+        console.log(`MIDI Input opened: ${input.name}`);
+      })
+      .catch((error) => {
+        console.warn(`Failed to open MIDI Input: ${input.name}`, error);
+      });
+
+    input.addEventListener("midimessage", handler);
+    this.attachedInputIds.add(input.id);
+  }
+
+  /**
+   * 優先候補名に一致するポートを選択します。
+   * 一致しなければ先頭ポートを返します。
+   */
+  private selectPortByName<T extends { name?: string }>(ports: T[], preferredNames: string[]): T | undefined {
+    if (ports.length === 0) {
+      return undefined;
+    }
+
+    if (preferredNames.length === 0) {
+      return ports[0];
+    }
+
+    const normalizedPreferredNames = preferredNames.map((name) => name.toLowerCase());
+    const matched = ports.find((port) => {
+      const portName = (port.name ?? "").toLowerCase();
+      return normalizedPreferredNames.some((keyword) => portName.includes(keyword));
+    });
+
+    return matched;
+  }
+
+  /**
+   * 追加入力リスナーを設定します。
+   */
+  private setupAdditionalInputListeners(inputs: WebMidi.MIDIInput[]): void {
+    const listeners = this.getAdditionalInputListeners();
+    if (listeners.length === 0) {
+      return;
+    }
+
+    for (const listener of listeners) {
+      const keyword = listener.nameIncludes.toLowerCase();
+      const matchedInput = inputs.find((input) =>
+        (input.name ?? "").toLowerCase().includes(keyword),
+      );
+
+      if (!matchedInput) {
+        console.warn(`Additional MIDI Input not found: ${listener.nameIncludes}`, {
+          availableInputs: inputs.map((port) => port.name ?? "(unknown)"),
+        });
+        continue;
+      }
+
+      this.attachInputListener(matchedInput, (message) => {
+        listener.onMessage(message, matchedInput);
+      });
+      console.log(`Additional MIDI Input: ${matchedInput.name}`);
     }
   }
 

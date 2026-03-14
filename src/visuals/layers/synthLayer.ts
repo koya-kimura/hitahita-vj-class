@@ -57,18 +57,6 @@ export class SynthLayer {
     _captureManager?: CaptureManager,
     _font?: p5.Font,
   ): void {
-
-    const fade = Math.min(Math.max(midiManager.faderValues[0] ?? 0, 0), 1);
-    // 0でクリア無し、1で強いフェード。背面レイヤーを見せるため反転しない。
-    const clearAlpha = Math.round(fade * 255);
-    if (clearAlpha > 0) {
-      tex.push();
-      tex.noStroke();
-      tex.fill(0, 0, 0, clearAlpha);
-      tex.rect(0, 0, tex.width, tex.height);
-      tex.pop();
-    }
-
     const addBlend = (midiManager.faderValues[7] ?? 0) >= 0.99;
     tex.push();
     tex.blendMode(addBlend ? p.ADD : p.BLEND);

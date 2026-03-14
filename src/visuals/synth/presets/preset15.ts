@@ -1,36 +1,54 @@
 import p5 from "p5";
 import { RectSynthObject } from "../object";
 import type { BaseSynthObject } from "../object";
+import type { RoleColorKey } from "../../../utils/color/colorPalette";
+
+const TRANSITION_ROLES: RoleColorKey[] = ["main", "accent2", "sub1", "accent1"];
 
 export const preset15 = (p: p5, bpm: number, startTime: number): BaseSynthObject[] => {
-  const h = p.height * 0.08;
-  return [
-    new RectSynthObject({
-      startTime,
-      bpm,
-      presetIndex: 14,
-      x: p.width * 0.5,
-      y: p.height * 0.5,
-      size: h,
-      rect: {
-        stretchMode: "vertical",
-        aspectRatio: p.width / h,
-      },
-      params: {
-        attackTime: 0.02,
-        decayTime: 0.12,
-        sustainLevel: 0.85,
-        releaseTime: 0.18,
-        lfoType: "square",
-        lfoRate: 0.8,
-        lfoDepth: 0.6,
-        colorParams: { paletteColor: "BROWN" },
-      },
-      movement: {
-        angle: -Math.PI * 0.5,
-        distance: p.height * 0.6,
-        easing: "easeInOutSine",
-      },
-    }),
-  ];
+  const objects: BaseSynthObject[] = [];
+  const bandThickness = Math.min(p.width, p.height) * 0.06;
+  const lanes = 4;
+
+  for (let i = 0; i < lanes; i++) {
+    const fromLeft = i % 2 === 0;
+    const y = p.height * (0.2 + i * 0.2);
+    const x = fromLeft ? -p.width * 0.18 : p.width * 1.18;
+    const roleColor = TRANSITION_ROLES[i % TRANSITION_ROLES.length];
+
+    objects.push(
+      new RectSynthObject({
+        startTime,
+        bpm,
+        presetIndex: 14,
+        x,
+        y,
+        size: bandThickness,
+        rect: {
+          stretchMode: "horizontal",
+          aspectRatio: p.width / bandThickness,
+        },
+        params: {
+          attackTime: 0.04,
+          decayTime: 0.72,
+          sustainLevel: 0.86,
+          releaseTime: 1.0,
+          lfoType: "sine",
+          lfoRate: 0.6 + i * 0.12,
+          lfoDepth: 0.08,
+          colorParams: { roleColor },
+        },
+        movement: {
+          angle: fromLeft ? 0 : Math.PI,
+          distance: p.width * 1.45,
+          easing: "easeOutExpo",
+        },
+        style: {
+          mode: "fill",
+        },
+      }),
+    );
+  }
+
+  return objects;
 };

@@ -18,7 +18,7 @@ export const drawShape10: SimpleShapeDrawer = (context) => {
 
             if (val > 0.8) {
                 tex.noStroke();
-                fillRole(tex, "sub2", 100);
+                fillRole(tex, "accent2", 100);
                 tex.circle(x, y, d);
             } else if(val > 0.5) {
                 tex.noFill();

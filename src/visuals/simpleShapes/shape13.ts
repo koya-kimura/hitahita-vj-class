@@ -38,7 +38,7 @@ export const drawShape13: SimpleShapeDrawer = (context) => {
     tex.push();
     tex.rotate(roll);
     tex.strokeWeight(sw);
-    strokeRole(tex, i % 5 === 0 ? "line" : "sub2", alpha);
+    strokeRole(tex, i % 5 === 0 ? "accent1" : "accent2", alpha);
     tex.rectMode(p.CENTER);
     tex.rect(0, 0, w, h);
     tex.pop();

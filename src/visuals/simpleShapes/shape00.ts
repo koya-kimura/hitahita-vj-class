@@ -33,7 +33,7 @@ export const drawShape00: SimpleShapeDrawer = (context) => {
       } else {
         tex.noFill();
         tex.strokeWeight(2);
-        strokeRole(tex, "line", 255);
+        strokeRole(tex, "accent1", 255);
       }
       tex.rectMode(p.CENTER);
       tex.rect(0, 0, s, s);

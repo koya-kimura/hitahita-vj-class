@@ -3,7 +3,7 @@ export const SYNTH_DEBUG_KEY_CONFIG = {
   enabled: true,
   triggerKey: "z",
   triggerKeyCode: 90,
-  presetIndex: 0,
+  presetIndex: 11,
 } as const;
 
 export const shouldTriggerSynthDebugKey = (key: string, keyCode: number): boolean => {

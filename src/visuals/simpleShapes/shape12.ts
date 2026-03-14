@@ -9,11 +9,11 @@ type ParticleState = "inbound" | "arc" | "outbound";
 const SHAPE12_COLOR_ROLES: RoleColorKey[] = [
   "main",
   "sub1",
-  "sub2",
-  "sub3",
+  "accent2",
+  "main",
   "accent1",
   "accent2",
-  "line",
+  "accent1",
 ];
 
 class Shape12Particle {

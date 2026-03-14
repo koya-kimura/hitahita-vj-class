@@ -18,6 +18,8 @@ const IMAGE_MAIN_KEYS = [
   "water",
 ] as const;
 
+const IMAGE_EXTRA_ASSETS = [{ key: "kimuraLogo", path: "/image/logo/kimura.png" }] as const;
+
 export class ImageLayer {
   private readonly imageAnimation: ImageAnimation;
   private readonly imageMap: Map<string, p5.Image>;
@@ -98,9 +100,12 @@ export class ImageLayer {
   private async loadAssets(p: p5): Promise<void> {
     const [loaded] = await Promise.all([
       Promise.all(
-        IMAGE_MAIN_KEYS.map(async (key) => {
-          const img = await this.loadImage(p, `/image/main/${key}.png`);
-          return { key, img };
+        [
+          ...IMAGE_MAIN_KEYS.map((key) => ({ key, path: `/image/main/${key}.png` })),
+          ...IMAGE_EXTRA_ASSETS,
+        ].map(async (asset) => {
+          const img = await this.loadImage(p, asset.path);
+          return { key: asset.key, img };
         }),
       ),
       this.imageAnimation.load(p, "/animation", [

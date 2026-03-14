@@ -47,6 +47,10 @@ const NOTE_RANGES = {
 
 const GRID_ROWS = 8;
 const GRID_COLS = 8;
+const APC_PREFERRED_PORT_NAMES = ["apc", "apc mini", "apc mini mk2"];
+const IAC_MONITOR_PORT_NAME = "iac";
+const IAC_TOGGLE_NOTE_START = 0;
+const IAC_TOGGLE_NOTE_END = 3;
 
 // LED_PALETTE, PAGE_LED_PALETTE は ./ledPalette.ts からインポート
 export { LED_PALETTE } from "./ledPalette";
@@ -81,6 +85,8 @@ export class APCMiniMK2Manager extends MIDIManager {
   private lastSequenceBeat: Map<string, number> = new Map();
   /** oneshot 押下直後のキー（1フレーム保持） */
   private oneshotTriggeredThisFrame: Set<string> = new Set();
+  /** IAC由来のワンショットトグル要求（0-3に対応） */
+  private iacToggleRequests: boolean[] = [false, false, false, false];
 
   constructor() {
     super();
@@ -91,6 +97,62 @@ export class APCMiniMK2Manager extends MIDIManager {
     this.faderButtonMode = FADER_BUTTON_MODE;
 
     this.onMidiMessageCallback = this.handleMIDIMessage.bind(this);
+  }
+
+  protected override getPreferredInputNames(): string[] {
+    return APC_PREFERRED_PORT_NAMES;
+  }
+
+  protected override getPreferredOutputNames(): string[] {
+    return APC_PREFERRED_PORT_NAMES;
+  }
+
+  protected override getAdditionalInputListeners(): Array<{
+    nameIncludes: string;
+    onMessage: (message: WebMidi.MIDIMessageEvent, input: WebMidi.MIDIInput) => void;
+  }> {
+    return [
+      {
+        nameIncludes: IAC_MONITOR_PORT_NAME,
+        onMessage: (message, input) => {
+          const data = Array.from(message.data);
+          console.log("[IAC MIDI]", input.name ?? IAC_MONITOR_PORT_NAME, data);
+          this.handleIACToggleMessage(message);
+        },
+      },
+    ];
+  }
+
+  /**
+    * IAC の Note On (note 0-3, velocity 127) をワンショットトグル要求として取り込む。
+   */
+  private handleIACToggleMessage(message: WebMidi.MIDIMessageEvent): void {
+    const [status, data1, data2] = message.data;
+    if (status !== MIDI_STATUS.NOTE_ON) {
+      return;
+    }
+
+    if (data1 < IAC_TOGGLE_NOTE_START || data1 > IAC_TOGGLE_NOTE_END) {
+      return;
+    }
+
+    if (data2 === 127) {
+      const index = data1 - IAC_TOGGLE_NOTE_START;
+      this.iacToggleRequests[index] = true;
+    }
+  }
+
+  /**
+   * IACワンショット要求を1件取り出す。
+   */
+  public consumeIACToggleRequest(index: number): boolean {
+    if (index < 0 || index >= this.iacToggleRequests.length) {
+      return false;
+    }
+
+    const requested = this.iacToggleRequests[index];
+    this.iacToggleRequests[index] = false;
+    return requested;
   }
 
   // ========================================

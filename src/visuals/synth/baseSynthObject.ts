@@ -13,6 +13,11 @@ import { beatsToMs, resolveSynthParams } from "./synthTypes";
 
 const EASING_TABLE: Record<EasingFunction, (x: number) => number> = {
   linear: easing.linear,
+  easeInSine: easing.easeInSine,
+  easeOutSine: easing.easeOutSine,
+  easeInExpo: easing.easeInExpo,
+  easeOutExpo: easing.easeOutExpo,
+  easeInOutExpo: easing.easeInOutExpo,
   easeInQuad: easing.easeInQuad,
   easeOutQuad: easing.easeOutQuad,
   easeInOutQuad: easing.easeInOutQuad,
@@ -98,20 +103,19 @@ export abstract class BaseSynthObject {
 
   protected setupDrawing(tex: p5.Graphics): void {
     const { hue, saturation, brightness } = this.params.colorParams;
-    const alpha = clamp(this.currentLevel, 0, 1) * 100;
 
     tex.push();
-    tex.colorMode(tex.HSB, 360, 100, 100, 100);
+    tex.colorMode(tex.HSB, 360, 100, 100, 255);
     tex.translate(this.currentX, this.currentY);
     tex.rotate(this.angle);
     tex.strokeWeight(this.style.strokeWeight ?? 1);
 
     if (this.style.mode === "stroke") {
       tex.noFill();
-      tex.stroke(hue, saturation, brightness, alpha);
+      tex.stroke(hue, saturation, brightness, 255);
     } else {
       tex.noStroke();
-      tex.fill(hue, saturation, brightness, alpha);
+      tex.fill(hue, saturation, brightness, 255);
     }
   }
 

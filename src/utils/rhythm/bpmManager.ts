@@ -236,6 +236,18 @@ export class BPMManager {
     return this.bpm;
   }
 
+  /**
+   * ビート位置を先頭（0）にリセットします。
+   * 再生状態は維持し、次フレームから0拍目として進行します。
+   */
+  public resetBeat(): void {
+    this.beatCount = 0;
+    this.elapsed = 0;
+    this.lastUpdateTime = performance.now();
+    this.isBeatUpdated = false;
+    console.log("Beat reset to 0.");
+  }
+
   // --- タップテンポ機能 ---
 
   /**

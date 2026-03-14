@@ -2,7 +2,7 @@ import type p5 from "p5";
 import type { VisualRenderContext } from "../types/render";
 import { UniformRandom } from "../utils/math/uniformRandom";
 import { map } from "../utils/math/mathUtils";
-import { leapRamp } from "../utils/math/gvm";
+import { leapRamp, leapNoise } from "../utils/math/gvm";
 import { zigzag } from "../utils/math/mathUtils";
 import { easeInOutQuad, easeInOutSine } from "../utils/math/easing";
 
@@ -71,7 +71,7 @@ export const uiPattern0Empty: UIDrawFunction = (context): void => {
                 tex.translate(tex.width * cx, tex.height * 0.5);
                 tex.rotate(angle);
                 tex.translate(radius * map(j, 0, 1, 0.5, 1.0), 0);
-                tex.rotate(Math.sin(beat*0.01+cx+i*0.1+j*0.1)*0.2);
+                tex.rotate(Math.sin(beat * 0.01 + cx + i * 0.1 + j * 0.1) * 0.2);
                 tex.text(BRAND, 0, 0);
                 tex.pop();
             }
@@ -96,7 +96,7 @@ export const uiPattern1SideAndBottom: UIDrawFunction = (context): void => {
         tex.rotate(angle);
         if (font) tex.textFont(font);
         tex.textSize(s);
-        tex.fill(255, 200);
+        tex.fill(255, 255);
         tex.textAlign(p.CENTER, p.CENTER);
         tex.text(str, 0, 0);
         tex.pop();
@@ -105,18 +105,22 @@ export const uiPattern1SideAndBottom: UIDrawFunction = (context): void => {
 };
 
 export const uiPattern2RightBadge: UIDrawFunction = (context): void => {
-    const { p, tex, font } = context;
+    const { p, tex, font, beat } = context;
 
     const s = tex.width * 0.28;
-    tex.push();
-    tex.translate(tex.width / 2, tex.height / 2);
-    tex.scale(1, 3);
-    if (font) tex.textFont(font);
-    tex.textSize(s);
-    tex.fill(255);
-    tex.textAlign(p.CENTER, p.CENTER);
-    tex.text(BRAND, 0, s * 0.1);
-    tex.pop();
+    const scl = map(easeInOutQuad(zigzag(leapRamp(context.beat, 16, 1))), 0, 1, 1, 3);
+
+    if (leapNoise(beat, 0.5, 0.5) < 0.95) {
+        tex.push();
+        tex.translate(tex.width / 2, tex.height / 2);
+        tex.scale(1, scl);
+        if (font) tex.textFont(font);
+        tex.textSize(s);
+        tex.fill(255);
+        tex.textAlign(p.CENTER, p.CENTER);
+        tex.text(BRAND, 0, s * 0.1);
+        tex.pop();
+    }
 };
 
 export const uiPattern3Hud: UIDrawFunction = (context): void => {

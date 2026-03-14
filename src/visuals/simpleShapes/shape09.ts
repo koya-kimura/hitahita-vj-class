@@ -74,7 +74,7 @@ export const drawShape09: SimpleShapeDrawer = (context) => {
 
   tex.noFill();
   tex.strokeWeight(1.1);
-  strokeRole(tex, "line", 190);
+  strokeRole(tex, "accent1", 190);
 
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {

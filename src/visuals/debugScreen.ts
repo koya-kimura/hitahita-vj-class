@@ -58,7 +58,7 @@ export class DebugScreen {
 
     tex.push();
     tex.noStroke();
-    tex.fill(0, 220);
+    tex.fill(0, 255);
     tex.rect(infoX - 16, infoY - 16, infoWidth + 32, infoHeight, 12);
 
     tex.fill(255);

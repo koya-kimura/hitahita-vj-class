@@ -101,6 +101,32 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
     shape: true,
   };
 
+  const toggleLayerVisibilityByIndex = (index: number): void => {
+    if (index === 1) {
+      layerVisibility.ui = !layerVisibility.ui;
+      return;
+    }
+    if (index === 2) {
+      layerVisibility.synth = !layerVisibility.synth;
+      return;
+    }
+    if (index === 3) {
+      layerVisibility.image = !layerVisibility.image;
+      return;
+    }
+    if (index === 4) {
+      layerVisibility.shape = !layerVisibility.shape;
+    }
+  };
+
+  const applyPendingIACToggleRequests = (): void => {
+    for (let index = 0; index < 4; index++) {
+      if (midiManager.consumeIACToggleRequest(index)) {
+        toggleLayerVisibilityByIndex(index + 1);
+      }
+    }
+  };
+
   const loadAssets = async (p: p5): Promise<void> => {
     try {
       // フォントを読み込み
@@ -168,6 +194,7 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
       audioManager?.update();
       captureManager?.update(p);
       midiManager.update(beat);
+      applyPendingIACToggleRequests();
 
       // ビジュアルの更新と描画
       visualComposer.update(
@@ -238,6 +265,9 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
     },
 
     handleKeyPressed(p: p5): void {
+      if (p.keyCode === 16) {
+        bpmManager.resetBeat(); // Shift キーでビートを先頭に戻す
+      }
       if (p.keyCode === 32) {
         p.fullscreen(true); // スペースキーでフルスクリーン
       }
@@ -245,16 +275,16 @@ export const createAppRuntime = (config?: Partial<AppConfig>): AppRuntime => {
         bpmManager.tapTempo(); // Enter キーでタップテンポ
       }
       if (p.key === "1") {
-        layerVisibility.synth = !layerVisibility.synth;
+        toggleLayerVisibilityByIndex(1);
       }
       if (p.key === "2") {
-        layerVisibility.ui = !layerVisibility.ui;
+        toggleLayerVisibilityByIndex(2);
       }
       if (p.key === "3") {
-        layerVisibility.image = !layerVisibility.image;
+        toggleLayerVisibilityByIndex(3);
       }
       if (p.key === "4") {
-        layerVisibility.shape = !layerVisibility.shape;
+        toggleLayerVisibilityByIndex(4);
       }
 
       if (shouldTriggerSynthDebugKey(p.key, p.keyCode)) {

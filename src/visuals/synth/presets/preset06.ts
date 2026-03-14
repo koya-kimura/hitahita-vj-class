@@ -3,32 +3,37 @@ import { RectSynthObject } from "../object";
 import type { BaseSynthObject } from "../object";
 
 export const preset06 = (p: p5, bpm: number, startTime: number): BaseSynthObject[] => {
-  const base = Math.min(p.width, p.height) * 0.14;
+  const centerX = p.width * 0.5;
+  const centerY = p.height * 0.5;
+  const grooveX = Math.sin(startTime * 0.018) * p.width * 0.02;
+  const grooveY = Math.cos(startTime * 0.015) * p.height * 0.018;
+  const size = Math.min(p.width, p.height) * 0.42;
+
   return [
     new RectSynthObject({
       startTime,
       bpm,
       presetIndex: 5,
-      x: p.width * 0.5,
-      y: p.height * 0.5,
-      size: base,
-      rect: { stretchMode: "horizontal", aspectRatio: 3.4 },
+      x: centerX + grooveX,
+      y: centerY + grooveY,
+      size,
+      rect: {
+        stretchMode: "uniform",
+        aspectRatio: 1.0,
+      },
       params: {
-        attackTime: 0.03,
-        decayTime: 0.18,
-        sustainLevel: 0.8,
-        releaseTime: 0.22,
-        lfoType: "triangle",
-        lfoRate: 1.6,
-        lfoDepth: 0.06,
-        colorParams: { paletteColor: "YELLOW" },
+        attackTime: 0.02,
+        decayTime: 0.55,
+        sustainLevel: 0.86,
+        releaseTime: 0.2,
+        lfoType: "sine",
+        lfoRate: 1.0,
+        lfoDepth: 0.035,
+        colorParams: { roleColor: "main" },
       },
-      movement: {
-        angle: 0,
-        distance: p.width,
-        easing: "easeInOutQuad",
+      style: {
+        mode: "fill",
       },
-      style: { mode: "stroke", strokeWeight: 3 },
     }),
   ];
 };

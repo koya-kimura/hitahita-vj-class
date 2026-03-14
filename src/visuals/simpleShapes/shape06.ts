@@ -16,7 +16,7 @@ export const drawShape06: SimpleShapeDrawer = (context) => {
 
     if(val > 0.2) {
           tex.noFill();
-  strokeRole(tex, "sub2", 160);
+  strokeRole(tex, "accent2", 160);
     } else {
             tex.noStroke();
     fillRole(tex, "main", 160);

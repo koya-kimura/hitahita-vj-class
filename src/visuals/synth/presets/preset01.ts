@@ -1,46 +1,31 @@
 import p5 from "p5";
-import { RectSynthObject } from "../object";
+import { CircleSynthObject } from "../object";
 import type { BaseSynthObject } from "../object";
 
 export const preset01 = (p: p5, bpm: number, startTime: number): BaseSynthObject[] => {
-  const objects: BaseSynthObject[] = [];
-  const n = 10;
-  for (let i = 0; i < n; i++) {
-    const x = (i + 0.5) * (p.width / n);
-    const y = p.height * 0.5;
-    const w = p.width / n;
+  const centerX = p.width * 0.5;
+  const centerY = p.height * 0.5;
+  const grooveX = Math.sin(startTime * 0.021) * p.width * 0.025;
+  const grooveY = Math.cos(startTime * 0.017) * p.height * 0.02;
 
-    objects.push(
-      new RectSynthObject({
-        startTime,
-        bpm,
-        presetIndex: 0,
-        x,
-        y,
-        size: w,
-        angle: 0,
-        params: {
-          attackTime: 0.125,
-          decayTime: 0.5,
-          sustainLevel: 1.0,
-          releaseTime: 0.125,
-          lfoType: "sine",
-          lfoRate: 0.5,
-          lfoDepth: 1.5,
-          colorParams: { paletteColor: "BLUE" },
-        },
-        movement: {
-          angle: -Math.PI * 0.5,
-          distance: p.height,
-          easing: "easeOutQuad",
-        },
-        rect: {
-          stretchMode: "vertical",
-          aspectRatio: 1.0,
-        },
-      }),
-    );
-  }
-
-  return objects;
+  return [
+    new CircleSynthObject({
+      startTime,
+      bpm,
+      presetIndex: 0,
+      x: centerX + grooveX,
+      y: centerY + grooveY,
+      size: Math.min(p.width, p.height) * 0.36,
+      params: {
+        attackTime: 0.02,
+        decayTime: 0.32,
+        sustainLevel: 0.9,
+        releaseTime: 0.18,
+        lfoType: "sine",
+        lfoRate: 1.2,
+        lfoDepth: 0.05,
+        colorParams: { roleColor: "accent2" },
+      },
+    }),
+  ];
 };

@@ -1,4 +1,5 @@
 import type p5 from "p5";
+import { getRoleColorHex } from "../color/colorPalette";
 
 /**
  * 電車の色設定
@@ -22,12 +23,12 @@ export interface TrainColors {
  * デフォルトの電車の色設定
  */
 const DEFAULT_COLORS: Required<TrainColors> = {
-    body: "#26AD95",
-    stripe: "#F3C03C",
-    window: "#D5E7F6",
-    doorFrame: "#28A48E",
-    wheel: "#333333",
-    light: "#F18F28",
+    body: getRoleColorHex("main"),
+    stripe: getRoleColorHex("accent1"),
+    window: getRoleColorHex("base"),
+    doorFrame: getRoleColorHex("sub1"),
+    wheel: getRoleColorHex("base"),
+    light: getRoleColorHex("accent2"),
 };
 
 /**
@@ -129,8 +130,8 @@ export function drawTrain(
  */
 export function drawYamanoteTrain(tex: p5.Graphics, x: number, y: number, w: number): void {
     drawTrain(tex, x, y, w, {
-        body: "#9ACD32",
-        stripe: "#228B22",
+        body: getRoleColorHex("main"),
+        stripe: getRoleColorHex("accent1"),
     });
 }
 
@@ -139,8 +140,8 @@ export function drawYamanoteTrain(tex: p5.Graphics, x: number, y: number, w: num
  */
 export function drawChuoLineTrain(tex: p5.Graphics, x: number, y: number, w: number): void {
     drawTrain(tex, x, y, w, {
-        body: "#FF6600",
-        stripe: "#CC5200",
+        body: getRoleColorHex("accent2"),
+        stripe: getRoleColorHex("accent1"),
     });
 }
 
@@ -149,8 +150,8 @@ export function drawChuoLineTrain(tex: p5.Graphics, x: number, y: number, w: num
  */
 export function drawKeihinTohokuTrain(tex: p5.Graphics, x: number, y: number, w: number): void {
     drawTrain(tex, x, y, w, {
-        body: "#00BFFF",
-        stripe: "#0080FF",
+        body: getRoleColorHex("sub1"),
+        stripe: getRoleColorHex("main"),
     });
 }
 
@@ -159,8 +160,14 @@ export function drawKeihinTohokuTrain(tex: p5.Graphics, x: number, y: number, w:
  */
 export function drawRandomTrain(tex: p5.Graphics, x: number, y: number, w: number): void {
     const randomColor = () => {
-        const hue = Math.floor(Math.random() * 360);
-        return `hsl(${hue}, 70%, 50%)`;
+        const palette = [
+            getRoleColorHex("base"),
+            getRoleColorHex("main"),
+            getRoleColorHex("sub1"),
+            getRoleColorHex("accent1"),
+            getRoleColorHex("accent2"),
+        ];
+        return palette[Math.floor(Math.random() * palette.length)];
     };
 
     drawTrain(tex, x, y, w, {

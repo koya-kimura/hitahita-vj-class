@@ -1,38 +1,54 @@
 import p5 from "p5";
-import { PolygonSynthObject } from "../object";
+import { RectSynthObject } from "../object";
 import type { BaseSynthObject } from "../object";
 
 export const preset10 = (p: p5, bpm: number, startTime: number): BaseSynthObject[] => {
-  return [
-    new PolygonSynthObject({
-      startTime,
-      bpm,
-      presetIndex: 9,
-      x: p.width * 0.5,
-      y: p.height * 0.5,
-      size: Math.min(p.width, p.height) * 0.26,
-      angle: Math.PI * 0.33,
-      polygon: {
-        sides: 5,
-        irregularity: 0.35,
-        spikiness: 0.55,
-        vertexLFO: true,
-        vertexLFORate: 3,
-        vertexLFODepth: 0.07,
-      },
-      params: {
-        attackTime: 0.03,
-        decayTime: 0.12,
-        sustainLevel: 0.78,
-        releaseTime: 0.24,
-        lfoType: "triangle",
-        lfoRate: 1.8,
-        lfoDepth: 0.04,
-        colorParams: { paletteColor: "LIGHT_BLUE" },
-      },
-      style: {
-        mode: "fill",
-      },
-    }),
-  ];
+  const objects: BaseSynthObject[] = [];
+  const cols = 16;
+  const rows = 9;
+  const cellW = p.width / cols;
+  const cellH = p.height / rows;
+
+  for (let gy = 0; gy < rows; gy++) {
+    for (let gx = 0; gx < cols; gx++) {
+      const maskSeed = startTime * 0.0031 + gx * 13.37 + gy * 19.91;
+      const xSeed = startTime * 0.0047 + gx * 31.17 + gy * 7.13;
+      const ySeed = startTime * 0.0059 + gx * 5.71 + gy * 37.43;
+      const maskRnd = Math.sin(maskSeed) * 0.5 + 0.5;
+      const xRnd = Math.sin(xSeed) * 0.5 + 0.5;
+      const yRnd = Math.sin(ySeed) * 0.5 + 0.5;
+
+      if (maskRnd < 0.2) {
+        const x = (gx + 0.5) * cellW + (xRnd - 0.5) * cellW * 0.55;
+        const y = (gy + 0.5) * cellH + (yRnd - 0.5) * cellH * 0.55;
+        const size = Math.min(cellW, cellH) * 0.74;
+        objects.push(
+          new RectSynthObject({
+            startTime,
+            bpm,
+            presetIndex: 9,
+            x,
+            y,
+            size,
+            params: {
+              attackTime: 0.02,
+              decayTime: 0.34,
+              sustainLevel: 0.72,
+              releaseTime: 0.2,
+              lfoType: "sine",
+              lfoRate: 3.2 + ((gx + gy) % 5) * 0.35,
+              lfoDepth: 0.22,
+              colorParams: { roleColor: xRnd > yRnd ? "accent1" : "sub1" },
+            },
+            rect: {
+              stretchMode: "uniform",
+              aspectRatio: 1.0,
+            },
+          }),
+        );
+      }
+    }
+  }
+
+  return objects;
 };

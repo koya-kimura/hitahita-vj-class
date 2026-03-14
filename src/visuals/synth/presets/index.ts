@@ -21,7 +21,7 @@ export type PresetFunction = (p: p5, bpm: number, startTime: number) => BaseSynt
 
 const PRESET_ENTRIES: Array<{ name: string; fn: PresetFunction }> = [
   { name: "preset01", fn: preset01 },
-  { name: "preset02", fn: preset02 },
+  { name: "preset14", fn: preset14 },
   { name: "preset03", fn: preset03 },
   { name: "preset04", fn: preset04 },
   { name: "preset05", fn: preset05 },
@@ -33,7 +33,7 @@ const PRESET_ENTRIES: Array<{ name: string; fn: PresetFunction }> = [
   { name: "preset11", fn: preset11 },
   { name: "preset12", fn: preset12 },
   { name: "preset13", fn: preset13 },
-  { name: "preset14", fn: preset14 },
+  { name: "preset02", fn: preset02 },
   { name: "preset15", fn: preset15 },
   { name: "preset16", fn: preset16 },
 ];

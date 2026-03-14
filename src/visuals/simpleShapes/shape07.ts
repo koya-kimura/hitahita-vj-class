@@ -26,10 +26,10 @@ export const drawShape07: SimpleShapeDrawer = (context) => {
         strokeRole(tex, "sub1", 140);
         } else if(val > 0.2) {
                     tex.noStroke();
-        fillRole(tex, "sub2", 220);
+        fillRole(tex, "accent2", 220);
         } else {
                     tex.noStroke();
-        fillRole(tex, "sub3", 220);
+        fillRole(tex, "main", 220);
         }
         tex.circle(0, 0, d);
       }

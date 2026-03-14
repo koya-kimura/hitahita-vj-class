@@ -13,27 +13,20 @@ export interface ColorPalette {
   accentColor: string;
 }
 
+const FIVE_COLOR_HEX = {
+  base: "#4e64b6",
+  main: "#4eb699",
+  sub1: "#95b64e",
+  accent1: "#b159ae",
+  accent2: "#4e64b6",
+} as const;
+
 export const COLOR_PALETTES: ColorPalette[] = [
-  // 1. 赤メイン × 青サブ × 黄アクセント（トリコロール）
-  { mainColor: "#0f162fff", subColor: "#10fa1bff", accentColor: "#e2debcff" },
-
-  // 2. オレンジメイン × 紫サブ × シアンアクセント
-  { mainColor: "#eb2929ff", subColor: "#2626daff", accentColor: "#f3f320ff" },
-
-  // 3. ピンクメイン × 緑サブ × 黄アクセント
-  { mainColor: "#ff2970ff", subColor: "#13c31cff", accentColor: "#13abcaff" },
-
-  // 4. 青メイン × オレンジサブ × ライムアクセント
-  { mainColor: "#1060ebff", subColor: "#fde424ff", accentColor: "#f70becff" },
-
-  // 5. 紫メイン × 黄緑サブ × オレンジアクセントs
-  { mainColor: "#9C27B0", subColor: "#8BC34A", accentColor: "#FF9800" },
-
-  // 6. ティールメイン × 赤サブ × 黄アクセント
-  { mainColor: "#00897B", subColor: "#D32F2F", accentColor: "#FFD600" },
-
-  // 7. インディゴメイン × ピンクサブ × シアンアクセント
-  { mainColor: "#3949AB", subColor: "#F06292", accentColor: "#00E5FF" },
+  { mainColor: FIVE_COLOR_HEX.main, subColor: FIVE_COLOR_HEX.sub1, accentColor: FIVE_COLOR_HEX.accent1 },
+  { mainColor: FIVE_COLOR_HEX.accent2, subColor: FIVE_COLOR_HEX.sub1, accentColor: FIVE_COLOR_HEX.main },
+  { mainColor: FIVE_COLOR_HEX.sub1, subColor: FIVE_COLOR_HEX.main, accentColor: FIVE_COLOR_HEX.accent2 },
+  { mainColor: FIVE_COLOR_HEX.base, subColor: FIVE_COLOR_HEX.main, accentColor: FIVE_COLOR_HEX.accent1 },
+  { mainColor: FIVE_COLOR_HEX.main, subColor: FIVE_COLOR_HEX.accent2, accentColor: FIVE_COLOR_HEX.accent1 },
 ];
 
 /**
@@ -44,17 +37,18 @@ export const getPalette = (index: number): ColorPalette => {
 };
 
 export const ROLE_COLOR_PALETTE = {
-  base: "#0f162f",
-  main: "#13abcaff",
-  sub1: "#1060ebff",
-  sub2: "#eb2929ff",
-  sub3: "#10fa1bff",
-  accent1: "#f3f320ff",
-  accent2: "#ff2970ff",
-  line: "#e2debcff",
+  base: FIVE_COLOR_HEX.base,
+  main: FIVE_COLOR_HEX.main,
+  sub1: FIVE_COLOR_HEX.sub1,
+  sub2: FIVE_COLOR_HEX.accent2,
+  sub3: FIVE_COLOR_HEX.main,
+  accent1: FIVE_COLOR_HEX.accent1,
+  accent2: FIVE_COLOR_HEX.accent2,
+  line: FIVE_COLOR_HEX.accent1,
 } as const;
 
 export type RoleColorKey = keyof typeof ROLE_COLOR_PALETTE;
+export const CORE_ROLE_COLOR_KEYS = ["base", "main", "sub1", "accent1", "accent2"] as const;
 
 export const getRoleColorHex = (key: RoleColorKey): string => {
   return ROLE_COLOR_PALETTE[key];
@@ -78,19 +72,19 @@ export const getRoleColorRgb = (key: RoleColorKey): { r: number; g: number; b: n
 export const applyRoleStroke = (
   target: p5 | p5.Graphics,
   key: RoleColorKey,
-  alpha = 255,
+  _alpha = 255,
 ): void => {
   const { r, g, b } = getRoleColorRgb(key);
-  target.stroke(r, g, b, alpha);
+  target.stroke(r, g, b, 255);
 };
 
 export const applyRoleFill = (
   target: p5 | p5.Graphics,
   key: RoleColorKey,
-  alpha = 255,
+  _alpha = 255,
 ): void => {
   const { r, g, b } = getRoleColorRgb(key);
-  target.fill(r, g, b, alpha);
+  target.fill(r, g, b, 255);
 };
 
 export const SYNTH_COLORS = {
